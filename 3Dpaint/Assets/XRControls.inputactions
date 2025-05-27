@@ -1,0 +1,34 @@
+{
+    "name": "XRControls",
+    "maps": [
+        {
+            "name": "RightHand",
+            "id": "eac08b96-322d-41dd-a8de-e917e4dbf9df",
+            "actions": [
+                {
+                    "name": "Draw",
+                    "type": "Button",
+                    "id": "0c2df25b-6d40-4c33-a7bd-254ba36f49fa",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "Press",
+                    "initialStateCheck": false
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "2c55e56a-aef5-470c-b65f-46b72e1365d3",
+                    "path": "<XRController>{RightHand}/{TriggerButton}",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Draw",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
+        }
+    ],
+    "controlSchemes": []
+}
