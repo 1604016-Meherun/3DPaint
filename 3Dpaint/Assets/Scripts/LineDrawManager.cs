@@ -11,6 +11,10 @@ public class LineDrawManager : MonoBehaviour
     public ControllerManager controllerManager;
     public Transform lineParent;
 
+    //adding for the colour changing theme.
+    [HideInInspector]
+    public Color brushColor = Color.red;
+
     void Update()
     {
         if (!controllerManager.leftController.isValid || !controllerManager.rightController.isValid)
@@ -30,6 +34,7 @@ public class LineDrawManager : MonoBehaviour
             {
                 GameObject newLine = Instantiate(linePrefab, lineParent);
                 currentLine = newLine.GetComponent<LineDraw>();
+                newLine.GetComponent<LineRenderer>().material.color = brushColor;
             }
             currentLine.AddPoint(drawSource.position);
         }
