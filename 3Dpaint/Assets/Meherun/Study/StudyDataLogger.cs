@@ -18,7 +18,9 @@ namespace ImmersiDraw.Study
         public string sessionEndUtc;
         public string appVersion;
 
-        public string recommenderMechanism;   // "ml_model" or "rule_based"
+        public string condition;              // "adaptive" or "control"
+        public string conditionAssignment;    // e.g. "auto:within_alternating" or "manual_override"
+        public string recommenderMechanism;   // "ml_model", "rule_based" or "random_control"
         public string recommenderVersionId;   // content hash of the frozen model / rule set
         public string promptLibraryVersionId; // content hash of the frozen prompt library
 

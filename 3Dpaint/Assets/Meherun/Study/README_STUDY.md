@@ -4,8 +4,26 @@ These scripts add the session flow and data logging described in the adult IRB p
 They are created automatically at runtime in any scene that has a `LineDrawManager`
 (the Drawing Scene), so **no scene or prefab changes are required**.
 
+## Conditions (adaptive vs. control)
+Every session runs in one of two conditions. Both look identical to the participant (same stress question,
+same prompt screen, same prompt library of matched difficulty); only the way the prompt is chosen differs.
+
+| Condition | How the prompt is chosen | `recommenderMechanism` in the log |
+|---|---|---|
+| **adaptive** | from the pre-session stress rating (rule-based mapping, or a frozen model if one is added) | `rule_based` / `ml_model` |
+| **control** | a random prompt category (equal chance), ignoring the stress rating; seeded by study ID + day so it is reproducible | `random_control` |
+
+Assignment is set by `conditionDesign` in `study_settings.json`:
+- `within_alternating` (default) – everyone gets both, alternating by day. Odd study IDs: A-C-A-C-A; even IDs: C-A-C-A-C.
+  Recruit an even number of participants so the two orders are balanced.
+- `between` – odd study IDs always adaptive, even IDs always control.
+- `adaptive_only` – no control condition.
+
+The setup screen shows the condition for the researcher, with a **Switch condition** button for a manual
+override (logged as `manual_override`). Do not tell the participant which condition they are in.
+
 ## Session flow (in the headset)
-1. **Researcher setup** – choose study ID (P01–P99) and day (1–5). No names are ever entered.
+1. **Researcher setup** – choose study ID (P01–P99) and day (1–5) and check the condition. No names are ever entered.
 2. **Pre-session stress prompt** – "How stressed do you feel right now?" 1 = Not at all stressed … 5 = Extremely stressed, with **Continue** and **Skip**.
 3. **Recommended prompt** – one prompt from the frozen prompt library, chosen from the stress rating
    (skipping gives the library's default category). Each participant gets a prompt they have not had before.
@@ -24,7 +42,7 @@ Buttons work with the XR ray, or with a thumbstick to move + **A/X** to press
 
 | File | Contents |
 |---|---|
-| `session.json` | study ID, day, start/end time, recommender mechanism + version ID, prompt-library version ID, pre/post stress (or skipped), recommended prompt ID + category, completion status, early-stop reason, drawing time, break count/time, stroke count, help requests, tooltip activations |
+| `session.json` | study ID, day, **condition** + how it was assigned, start/end time, recommender mechanism + version ID, prompt-library version ID, pre/post stress (or skipped), recommended prompt ID + category, completion status, early-stop reason, drawing time, break count/time, stroke count, help requests, tooltip activations |
 | `events.csv` | time-stamped events: session/task start & end, stress ratings, prompt recommended, stroke start/end (points, duration, color), color selections, undo, erase, controller button actions, help requests, tooltip activations, breaks, time limit, early stop |
 | `hand_motion.csv` | left/right **controller** position + orientation and trigger value, sampled at `motionSampleHz` during drawing |
 

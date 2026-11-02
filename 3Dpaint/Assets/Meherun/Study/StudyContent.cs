@@ -17,6 +17,13 @@ namespace ImmersiDraw.Study
         public float motionSampleHz = 30f;          // hand (controller) pose sampling rate
         public bool collectPostSessionStressInApp = false; // false = post-session rating is on the paper survey
         public float panelDistanceMeters = 1.2f;
+
+        // How each session is assigned to the ADAPTIVE (stress-based) or CONTROL (random prompt) condition:
+        //   "within_alternating" - every participant gets both, alternating by day; odd study IDs start
+        //                          adaptive (A-C-A-C-A), even IDs start control (C-A-C-A-C)  [default]
+        //   "between"            - odd study IDs always adaptive, even IDs always control
+        //   "adaptive_only"      - no control condition (original single-condition design)
+        public string conditionDesign = "within_alternating";
     }
 
     // ------------------------------------------------------------------

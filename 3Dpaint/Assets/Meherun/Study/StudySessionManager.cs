@@ -20,7 +20,10 @@ namespace ImmersiDraw.Study
         StudySettings settings;
         PromptLibraryData library;
         string libraryVersionId;
-        IPromptRecommender recommender;
+        IPromptRecommender adaptiveRecommender;
+        RandomControlRecommender controlRecommender;
+        IPromptRecommender recommender;     // the one used in the current session
+        string conditionOverride;           // null = automatic assignment
 
         StudyPanelUI ui;
         StudyDataLogger log;
@@ -75,8 +78,10 @@ namespace ImmersiDraw.Study
                 Destroy(gameObject);
                 return;
             }
-            recommender = RecommenderFactory.Create(library);
-            Debug.Log($"ImmersiDraw study: recommender={recommender.MechanismType} {recommender.VersionId}, library={libraryVersionId}");
+            adaptiveRecommender = RecommenderFactory.Create(library);
+            controlRecommender = new RandomControlRecommender(library);
+            Debug.Log($"ImmersiDraw study: adaptive={adaptiveRecommender.MechanismType} {adaptiveRecommender.VersionId}, " +
+                      $"control={controlRecommender.VersionId}, library={libraryVersionId}, design={settings.conditionDesign}");
         }
 
         void Start()
@@ -98,24 +103,47 @@ namespace ImmersiDraw.Study
         }
 
         // ------------------------------------------------------------------ screens
+        string AutoCondition => ConditionAssignment.Assign(settings.conditionDesign, participantNumber, day);
+        string CurrentCondition => conditionOverride ?? AutoCondition;
+
         void ShowSetup()
         {
             phase = Phase.Setup;
             ui.LeftHandOnly = false;
             string warning = SessionAlreadyExists(ParticipantId, day)
                 ? "\n<color=#FFC857>A session for this study ID and day already exists.</color>" : "";
+            string condLabel = CurrentCondition == ConditionAssignment.Adaptive ? "ADAPTIVE" : "CONTROL (random prompt)";
+            string condSource = conditionOverride == null ? $"automatic: {settings.conditionDesign}" : "<color=#FFC857>manual override</color>";
             ui.Show("Researcher setup",
-                $"Study ID: <b>{ParticipantId}</b>     Day: <b>{day}</b> of 5{warning}\n<size=24>Do not enter names. Use study ID numbers only.</size>",
-                new[] { new ButtonSpec("ID -", () => { participantNumber = Mathf.Max(1, participantNumber - 1); ShowSetup(); }),
-                        new ButtonSpec("ID +", () => { participantNumber = Mathf.Min(99, participantNumber + 1); ShowSetup(); }),
-                        new ButtonSpec("Day -", () => { day = Mathf.Max(1, day - 1); ShowSetup(); }),
-                        new ButtonSpec("Day +", () => { day = Mathf.Min(5, day + 1); ShowSetup(); }) },
-                new[] { new ButtonSpec("Start session", StartSession) });
+                $"Study ID: <b>{ParticipantId}</b>     Day: <b>{day}</b> of 5{warning}\n" +
+                $"<size=26>Condition: <b>{condLabel}</b> ({condSource})</size>\n" +
+                "<size=24>Do not tell the participant the condition. Use study ID numbers only - no names.</size>",
+                new[] { new ButtonSpec("ID -", () => { participantNumber = Mathf.Max(1, participantNumber - 1); conditionOverride = null; ShowSetup(); }),
+                        new ButtonSpec("ID +", () => { participantNumber = Mathf.Min(99, participantNumber + 1); conditionOverride = null; ShowSetup(); }),
+                        new ButtonSpec("Day -", () => { day = Mathf.Max(1, day - 1); conditionOverride = null; ShowSetup(); }),
+                        new ButtonSpec("Day +", () => { day = Mathf.Min(5, day + 1); conditionOverride = null; ShowSetup(); }) },
+                new[] { new ButtonSpec("Switch condition", () =>
+                        {
+                            conditionOverride = CurrentCondition == ConditionAssignment.Adaptive
+                                ? ConditionAssignment.Control : ConditionAssignment.Adaptive;
+                            if (conditionOverride == AutoCondition) conditionOverride = null;
+                            ShowSetup();
+                        }),
+                        new ButtonSpec("Start session", StartSession) });
             ui.PlaceInFrontOfUser(settings.panelDistanceMeters);
         }
 
         void StartSession()
         {
+            string condition = CurrentCondition;
+            if (condition == ConditionAssignment.Control)
+            {
+                controlRecommender.ParticipantId = ParticipantId;
+                controlRecommender.Day = day;
+                recommender = controlRecommender;
+            }
+            else recommender = adaptiveRecommender;
+
             log = new StudyDataLogger(ParticipantId, day);
             record = new SessionRecord
             {
@@ -123,11 +151,13 @@ namespace ImmersiDraw.Study
                 studyDay = day,
                 sessionStartUtc = DateTime.UtcNow.ToString("o", CultureInfo.InvariantCulture),
                 appVersion = Application.version,
+                condition = condition,
+                conditionAssignment = conditionOverride == null ? "auto:" + settings.conditionDesign : "manual_override",
                 recommenderMechanism = recommender.MechanismType,
                 recommenderVersionId = recommender.VersionId,
                 promptLibraryVersionId = libraryVersionId,
             };
-            log.Event("session_start", $"day={day};recommender={recommender.MechanismType}:{recommender.VersionId};library={libraryVersionId}");
+            log.Event("session_start", $"day={day};condition={condition};recommender={recommender.MechanismType}:{recommender.VersionId};library={libraryVersionId}");
             log.SaveSession(record);
             pendingRating = null;
             ShowStressScreen(pre: true);
@@ -390,6 +420,7 @@ namespace ImmersiDraw.Study
             log = null;
             record = null;
             prompt = null;
+            conditionOverride = null;
             drawingSecondsSinceBreak = 0;
         }
 

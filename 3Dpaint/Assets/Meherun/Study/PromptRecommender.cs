@@ -75,8 +75,10 @@ namespace ImmersiDraw.Study
     //   "weights": [ {"values":[...7 numbers...]}, {"values":[...]}, {"values":[...]} ] }
     public class FrozenLinearModelRecommender : IPromptRecommender
     {
+#pragma warning disable 0649 // fields are filled by JsonUtility
         [Serializable] private class Row { public float[] values; }
         [Serializable] private class ModelFile { public string[] features; public string[] categories; public Row[] weights; }
+#pragma warning restore 0649
 
         private readonly PromptLibraryData library;
         private readonly ModelFile model;
@@ -115,6 +117,62 @@ namespace ImmersiDraw.Study
                 if (s > bestScore) { bestScore = s; best = c; }   // argmax of softmax = argmax of logits
             }
             return RecommenderFactory.PickFromCategory(library, model.categories[best], used);
+        }
+    }
+
+    // CONTROL condition: ignores the stress rating and picks a prompt category at random (equal chance),
+    // then a prompt this participant has not had yet. Prompts are drawn from the SAME frozen library, so
+    // prompt difficulty is matched between conditions. The random draw is seeded by study ID + day, so the
+    // choice is reproducible and can be audited later.
+    public class RandomControlRecommender : IPromptRecommender
+    {
+        private readonly PromptLibraryData library;
+        public string MechanismType => "random_control";
+        public string VersionId { get; }
+        public string ParticipantId = "";
+        public int Day;
+
+        public RandomControlRecommender(PromptLibraryData library)
+        {
+            this.library = library;
+            VersionId = "random-" + StudyContent.ShortHash("uniform-category;seed=participantId+day;v1");
+        }
+
+        public DrawingPrompt Recommend(int? stress, ICollection<string> used)
+        {
+            var rng = new System.Random(StableSeed(ParticipantId + "|" + Day));
+            string category = library.categories[rng.Next(library.categories.Length)];
+            return RecommenderFactory.PickFromCategory(library, category, used);
+        }
+
+        // string.GetHashCode() differs between runs/platforms, so use a fixed FNV-1a hash instead.
+        private static int StableSeed(string s)
+        {
+            unchecked
+            {
+                uint h = 2166136261;
+                foreach (char c in s) { h ^= c; h *= 16777619; }
+                return (int)(h & 0x7FFFFFFF);
+            }
+        }
+    }
+
+    public static class ConditionAssignment
+    {
+        public const string Adaptive = "adaptive";
+        public const string Control = "control";
+
+        public static string Assign(string design, int participantNumber, int day)
+        {
+            bool oddId = participantNumber % 2 == 1;
+            switch (design)
+            {
+                case "adaptive_only": return Adaptive;
+                case "between": return oddId ? Adaptive : Control;
+                default: // within_alternating
+                    bool oddDay = day % 2 == 1;
+                    return (oddId == oddDay) ? Adaptive : Control;
+            }
         }
     }
 }
