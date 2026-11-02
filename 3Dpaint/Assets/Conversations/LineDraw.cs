@@ -8,6 +8,8 @@ public class LineDraw : MonoBehaviour
     private List<Vector3> points = new List<Vector3>();
     public float minDistance = 0.01f;
 
+    public int PointCount => points.Count;
+
     void Awake()
     {
         lineRenderer = GetComponent<LineRenderer>();

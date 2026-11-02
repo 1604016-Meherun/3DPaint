@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.XR;
 using System.Collections.Generic;
+using ImmersiDraw.Study;
 
 public class LineDrawManager : MonoBehaviour
 {
@@ -18,6 +19,7 @@ public class LineDrawManager : MonoBehaviour
     public GameObject colorPopupPanel;
 
     private LineDraw currentLine;
+    private float strokeStartTime;
     private InputDevice rightController;
 
     void Start()
@@ -54,6 +56,9 @@ public class LineDrawManager : MonoBehaviour
 
         rightController.TryGetFeatureValue(CommonUsages.triggerButton, out bool triggerPressed);
 
+        // During an IRB study session, drawing is only enabled in the drawing phase.
+        if (!StudyEvents.DrawingAllowed) triggerPressed = false;
+
         if (triggerPressed)
         {
             if (currentLine == null)
@@ -61,11 +66,18 @@ public class LineDrawManager : MonoBehaviour
                 GameObject newLine = Instantiate(linePrefab, lineParent);
                 currentLine = newLine.GetComponent<LineDraw>();
                 newLine.GetComponent<LineRenderer>().material.color = brushColor;
+                strokeStartTime = Time.realtimeSinceStartup;
+                StudyEvents.Record("stroke_start", "#" + ColorUtility.ToHtmlStringRGBA(brushColor));
             }
             currentLine.AddPoint(drawSource.position);
         }
         else
         {
+            if (currentLine != null)
+            {
+                float secs = Time.realtimeSinceStartup - strokeStartTime;
+                StudyEvents.Record("stroke_end", $"points={currentLine.PointCount};seconds={secs:0.00}");
+            }
             currentLine = null;
         }
     }
@@ -73,6 +85,7 @@ public class LineDrawManager : MonoBehaviour
     public void SwapColor(FavoriteColorTemplate color)
     {
         SetBrushColor(color.primaryColor);
+        StudyEvents.Record("color_selection", "palette:#" + ColorUtility.ToHtmlStringRGBA(brushColor));
     }
 
     // --- Custom color control (type a color code and paint with it) ---
@@ -80,6 +93,7 @@ public class LineDrawManager : MonoBehaviour
     // Shows/hides the color popup panel. Wired to the "Color" button.
     public void ToggleColorPopup()
     {
+        StudyEvents.Record("ui_button", "color_popup");
         if (colorPopupPanel != null) colorPopupPanel.SetActive(!colorPopupPanel.activeSelf);
     }
 
@@ -94,7 +108,8 @@ public class LineDrawManager : MonoBehaviour
     public void ApplyHexInput()
     {
         if (hexInputField == null) return;
-        SetColorFromHex(hexInputField.text);
+        if (SetColorFromHex(hexInputField.text))
+            StudyEvents.Record("color_selection", "hex:#" + ColorUtility.ToHtmlStringRGBA(brushColor));
     }
 
     // Applies the typed color and closes the popup. Wired to the "Paint" button.
@@ -108,6 +123,7 @@ public class LineDrawManager : MonoBehaviour
     public void Undo()
     {
         if (lineParent == null || lineParent.childCount == 0) return;
+        StudyEvents.Record("undo", "");
         Transform last = lineParent.GetChild(lineParent.childCount - 1);
         Destroy(last.gameObject);
     }
@@ -146,6 +162,7 @@ public class LineDrawManager : MonoBehaviour
 
     public void Erase()
     {
+        StudyEvents.Record("erase_all", "strokes=" + lineParent.childCount);
         // Loop backwards to avoid issues when modifying the hierarchy while iterating
         for (int i = lineParent.childCount - 1; i >= 0; i--)
         {
