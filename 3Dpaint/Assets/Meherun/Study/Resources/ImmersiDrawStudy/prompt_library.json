@@ -1,0 +1,21 @@
+{
+  "categories": ["creative_exploration", "nature_calm", "grounding_rhythm"],
+  "defaultCategory": "nature_calm",
+  "prompts": [
+    { "id": "CE01", "category": "creative_exploration", "complexity": "simple", "text": "Draw a small imaginary creature floating in the air around you. Use at least three colors." },
+    { "id": "CE02", "category": "creative_exploration", "complexity": "simple", "text": "Draw a hot-air balloon and the sky around it." },
+    { "id": "CE03", "category": "creative_exploration", "complexity": "simple", "text": "Draw a doorway to a place you would like to visit." },
+    { "id": "CE04", "category": "creative_exploration", "complexity": "simple", "text": "Draw a tree whose leaves are any colors you like." },
+    { "id": "CE05", "category": "creative_exploration", "complexity": "simple", "text": "Draw a house in the clouds." },
+    { "id": "NC01", "category": "nature_calm", "complexity": "simple", "text": "Draw a quiet lake with a few hills behind it." },
+    { "id": "NC02", "category": "nature_calm", "complexity": "simple", "text": "Draw a flower garden around you, one flower at a time." },
+    { "id": "NC03", "category": "nature_calm", "complexity": "simple", "text": "Draw a sunset over the ocean with slow, wide strokes." },
+    { "id": "NC04", "category": "nature_calm", "complexity": "simple", "text": "Draw a forest path with a few trees on each side." },
+    { "id": "NC05", "category": "nature_calm", "complexity": "simple", "text": "Draw clouds drifting across the sky." },
+    { "id": "GR01", "category": "grounding_rhythm", "complexity": "simple", "text": "Draw slow waves, one after another, breathing out with each stroke." },
+    { "id": "GR02", "category": "grounding_rhythm", "complexity": "simple", "text": "Draw a large spiral that slowly grows outward." },
+    { "id": "GR03", "category": "grounding_rhythm", "complexity": "simple", "text": "Draw rings around yourself, one slow circle at a time." },
+    { "id": "GR04", "category": "grounding_rhythm", "complexity": "simple", "text": "Draw falling leaves drifting slowly to the ground." },
+    { "id": "GR05", "category": "grounding_rhythm", "complexity": "simple", "text": "Draw a simple pattern of repeating shapes in a row." }
+  ]
+}

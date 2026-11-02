@@ -1,0 +1,8 @@
+{
+  "studyModeEnabled": true,
+  "drawingMinutes": 20,
+  "breakIntervalMinutes": 10,
+  "motionSampleHz": 30,
+  "collectPostSessionStressInApp": false,
+  "panelDistanceMeters": 1.2
+}
