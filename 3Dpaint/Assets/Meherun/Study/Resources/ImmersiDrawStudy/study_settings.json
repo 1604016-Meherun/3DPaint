@@ -4,5 +4,6 @@
   "breakIntervalMinutes": 10,
   "motionSampleHz": 30,
   "collectPostSessionStressInApp": false,
-  "panelDistanceMeters": 1.2
+  "panelDistanceMeters": 1.2,
+  "conditionDesign": "within_alternating"
 }
